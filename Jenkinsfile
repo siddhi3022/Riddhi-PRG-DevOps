@@ -2,10 +2,11 @@ pipeline {
     agent any
 
     environment {
-        APP   = 'vehicle-rental-service'
-        NS    = 'vehicle-rental-system'
-        MON   = 'monitoring'
-        IMAGE = 'vehicle-rental-service:v1.0.0'
+        APP        = 'vehicle-rental-service'
+        NS         = 'vehicle-rental-system'
+        MON        = 'monitoring'
+        IMAGE      = 'vehicle-rental-service:v1.0.0'
+        KUBECONFIG = 'C:/Users/Riddhi siddhi/.kube/config'
     }
 
     stages {
@@ -23,20 +24,25 @@ pipeline {
             steps {
                 bat '''
                     docker build -t %IMAGE% vehicle-rental-service
-                    docker save -o k8s.tar %IMAGE%
-                    docker inspect minikube >nul 2>&1 && (
-                        echo Loading %IMAGE% into minikube container...
-                        docker cp k8s.tar minikube:/k8s.tar
-                        docker exec minikube ctr -n k8s.io images import /k8s.tar
-                        docker exec minikube rm -f /k8s.tar
+                    minikube status >nul 2>&1 && (
+                        echo Loading %IMAGE% into minikube cluster via minikube image load...
+                        minikube image load %IMAGE%
+                    ) || (
+                        docker save -o k8s.tar %IMAGE%
+                        docker inspect minikube >nul 2>&1 && (
+                            echo Loading %IMAGE% into minikube container...
+                            docker cp k8s.tar minikube:/k8s.tar
+                            docker exec minikube ctr -n k8s.io images import /k8s.tar
+                            docker exec minikube rm -f /k8s.tar
+                        )
+                        docker inspect desktop-control-plane >nul 2>&1 && (
+                            echo Loading %IMAGE% into desktop-control-plane container...
+                            docker cp k8s.tar desktop-control-plane:/k8s.tar
+                            docker exec desktop-control-plane ctr -n k8s.io images import /k8s.tar
+                            docker exec desktop-control-plane rm -f /k8s.tar
+                        )
+                        if exist k8s.tar del /f /q k8s.tar
                     )
-                    docker inspect desktop-control-plane >nul 2>&1 && (
-                        echo Loading %IMAGE% into desktop-control-plane container...
-                        docker cp k8s.tar desktop-control-plane:/k8s.tar
-                        docker exec desktop-control-plane ctr -n k8s.io images import /k8s.tar
-                        docker exec desktop-control-plane rm -f /k8s.tar
-                    )
-                    del /f /q k8s.tar
                 '''
             }
         }
@@ -44,6 +50,7 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 bat '''
+                    if not defined KUBECONFIG if exist "C:\\Users\\Riddhi siddhi\\.kube\\config" set KUBECONFIG=C:\\Users\\Riddhi siddhi\\.kube\\config
                     kubectl apply -f kubernetes/namespace.yaml
                     kubectl apply -f kubernetes/monitoring/namespace.yaml
                     kubectl apply -f kubernetes/vehicle-rental-service-deployment.yaml
@@ -61,6 +68,7 @@ pipeline {
         stage('Start Services') {
             steps {
                 bat '''
+                    if not defined KUBECONFIG if exist "C:\\Users\\Riddhi siddhi\\.kube\\config" set KUBECONFIG=C:\\Users\\Riddhi siddhi\\.kube\\config
                     set JENKINS_NODE_COOKIE=dontKillMe
                     powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 1000,1001,1002 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; exit 0"
                     start /B kubectl port-forward service/prometheus 1000:1000 -n %MON%
