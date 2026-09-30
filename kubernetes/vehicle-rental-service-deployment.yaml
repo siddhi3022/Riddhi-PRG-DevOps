@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vehicle-rental-service
+  namespace: vehicle-rental-system
+  labels:
+    app: vehicle-rental-service
+    version: "v1.0.0"
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: vehicle-rental-service
+  template:
+    metadata:
+      labels:
+        app: vehicle-rental-service
+        version: "v1.0.0"
+    spec:
+      containers:
+        - name: vehicle-rental-service
+          image: vehicle-rental-service:v1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
