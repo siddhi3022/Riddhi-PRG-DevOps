@@ -47,6 +47,26 @@ pipeline {
             }
         }
 
+        stage('Trivy Security Scan') {
+            steps {
+                bat '''
+                    echo =======================================================
+                    echo RUNNING TRIVY SECURITY SCAN
+                    echo =======================================================
+                    echo [1/2] Scanning Repository Filesystem for vulnerabilities & misconfigurations...
+                    docker run --rm -v "%CD%:/apps" aquasec/trivy:latest fs --severity HIGH,CRITICAL /apps
+
+                    echo [2/2] Scanning Docker Image %IMAGE%...
+                    docker save -o trivy-scan.tar %IMAGE%
+                    docker run --rm -v "%CD%:/apps" aquasec/trivy:latest image --input /apps/trivy-scan.tar --severity HIGH,CRITICAL
+                    if exist trivy-scan.tar del /f /q trivy-scan.tar
+                    echo =======================================================
+                    echo TRIVY SECURITY SCAN COMPLETED
+                    echo =======================================================
+                '''
+            }
+        }
+
         stage('Deploy to Kubernetes') {
             steps {
                 bat '''

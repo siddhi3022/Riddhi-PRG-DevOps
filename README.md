@@ -71,9 +71,24 @@ Checkout
 
 On a failed pipeline after deployment, Jenkins attempts `kubectl rollout undo` for the Vehicle Rental deployment.
 
-## Jenkins
+## Trivy Security Scanning
 
-The Jenkinsfile is written for a Windows Jenkins agent and uses `bat` commands. Docker Desktop and a working Kubernetes context are required.
+Trivy security scanning is fully integrated across the pipeline:
+
+1. **Jenkins Pipeline (`Jenkinsfile`)**:
+   - `Trivy Security Scan` stage automatically scans the repository filesystem and built Docker image (`vehicle-rental-service:v1.0.0`) for `HIGH` and `CRITICAL` vulnerabilities.
+
+2. **GitHub Actions Workflow (`.github/workflows/trivy.yml`)**:
+   - Automatically runs on `push` to `main`/`master` and pull requests to scan filesystem dependencies and Docker images.
+
+3. **Local Developer Utility Scripts**:
+   - **PowerShell (Windows)**: Run `.\trivy-scan.ps1`
+   - **Bash (Linux / macOS / Git Bash)**: Run `./trivy-scan.sh`
+
+```powershell
+# Run Trivy scan locally via Docker container
+.\trivy-scan.ps1
+```
 
 ## Kubernetes
 
