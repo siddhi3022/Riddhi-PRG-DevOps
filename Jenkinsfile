@@ -24,25 +24,6 @@ pipeline {
             steps {
                 bat '''
                     docker build -t %IMAGE% vehicle-rental-service
-                    minikube status >nul 2>&1 && (
-                        echo Loading %IMAGE% into minikube cluster via minikube image load...
-                        minikube image load %IMAGE%
-                    ) || (
-                        docker save -o k8s.tar %IMAGE%
-                        docker inspect minikube >nul 2>&1 && (
-                            echo Loading %IMAGE% into minikube container...
-                            docker cp k8s.tar minikube:/k8s.tar
-                            docker exec minikube ctr -n k8s.io images import /k8s.tar
-                            docker exec minikube rm -f /k8s.tar
-                        )
-                        docker inspect desktop-control-plane >nul 2>&1 && (
-                            echo Loading %IMAGE% into desktop-control-plane container...
-                            docker cp k8s.tar desktop-control-plane:/k8s.tar
-                            docker exec desktop-control-plane ctr -n k8s.io images import /k8s.tar
-                            docker exec desktop-control-plane rm -f /k8s.tar
-                        )
-                        if exist k8s.tar del /f /q k8s.tar
-                    )
                 '''
             }
         }
@@ -73,8 +54,10 @@ pipeline {
                     kubectl apply -f kubernetes/monitoring/grafana.yaml
                     kubectl rollout restart deployment/%APP% -n %NS%
                     kubectl rollout restart deployment/prometheus -n %MON%
+                    kubectl rollout restart deployment/grafana -n %MON%
                     kubectl rollout status deployment/%APP% -n %NS% --timeout=120s
                     kubectl rollout status deployment/prometheus -n %MON% --timeout=60s
+                    kubectl rollout status deployment/grafana -n %MON% --timeout=60s
                 '''
             }
         }
@@ -85,10 +68,10 @@ pipeline {
                     if not defined KUBECONFIG if exist "C:\\Users\\Riddhi siddhi\\.kube\\config" set KUBECONFIG=C:\\Users\\Riddhi siddhi\\.kube\\config
                     set JENKINS_NODE_COOKIE=dontKillMe
                     powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 1000,1001,1002 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; exit 0"
-                    start /B kubectl port-forward service/prometheus 1000:1000 -n %MON%
-                    start /B kubectl port-forward service/vehicle-rental-service 1001:1001 -n %NS%
-                    start /B kubectl port-forward service/grafana 1002:1002 -n %MON%
-                    powershell -NoProfile -Command "Start-Sleep -Seconds 3"
+                    powershell -NoProfile -Command "Start-Process kubectl -ArgumentList 'port-forward service/prometheus 1000:1000 -n monitoring' -WindowStyle Hidden"
+                    powershell -NoProfile -Command "Start-Process kubectl -ArgumentList 'port-forward service/vehicle-rental-service 1001:1001 -n vehicle-rental-system' -WindowStyle Hidden"
+                    powershell -NoProfile -Command "Start-Process kubectl -ArgumentList 'port-forward service/grafana 1002:1002 -n monitoring' -WindowStyle Hidden"
+                    powershell -NoProfile -Command "Start-Sleep -Seconds 3; Get-NetTCPConnection -LocalPort 1000,1001,1002 -ErrorAction SilentlyContinue | Format-Table LocalPort, State, OwningProcess -AutoSize"
                     exit /b 0
                 '''
             }
