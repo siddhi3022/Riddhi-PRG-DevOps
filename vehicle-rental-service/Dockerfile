@@ -5,7 +5,8 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip "setuptools>=78.1.1" && \
+    pip install --no-cache-dir --upgrade -r requirements.txt
 
 COPY app ./app
 
