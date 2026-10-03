@@ -51,11 +51,11 @@ pipeline {
             steps {
                 bat '''
                     echo [1/2] Scanning Repository Filesystem...
-                    docker run --rm -v "%CD%:/apps" aquasec/trivy:latest fs --severity HIGH,CRITICAL /apps
+                    docker run --rm -v trivy-cache:/root/.cache -v "%CD%:/apps" aquasec/trivy:latest fs --severity HIGH,CRITICAL /apps
 
                     echo [2/2] Scanning Docker Image %IMAGE%...
                     docker save -o trivy-scan.tar %IMAGE%
-                    docker run --rm -v "%CD%:/apps" aquasec/trivy:latest image --input /apps/trivy-scan.tar --severity HIGH,CRITICAL
+                    docker run --rm -v trivy-cache:/root/.cache -v "%CD%:/apps" aquasec/trivy:latest image --input /apps/trivy-scan.tar --severity HIGH,CRITICAL
                     if exist trivy-scan.tar del /f /q trivy-scan.tar
                 '''
             }

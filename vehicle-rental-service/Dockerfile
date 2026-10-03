@@ -1,16 +1,11 @@
-FROM python:3.13-alpine
-
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+FROM python:3.12-slim
 
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip "setuptools>=78.1.1" && \
-    pip install --no-cache-dir --upgrade -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
-
-USER appuser
 
 EXPOSE 8000
 

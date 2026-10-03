@@ -1,7 +1,7 @@
 $ImageName = "vehicle-rental-service:v1.0.0"
 
 Write-Host "`n[1/2] Scanning Repository Filesystem..." -ForegroundColor Yellow
-docker run --rm -v "${PWD}:/apps" aquasec/trivy:latest fs --severity HIGH,CRITICAL /apps
+docker run --rm -v trivy-cache:/root/.cache -v "${PWD}:/apps" aquasec/trivy:latest fs --severity HIGH,CRITICAL /apps
 
 Write-Host "`n[2/2] Scanning Docker Image: $ImageName..." -ForegroundColor Yellow
 $imageExists = docker images -q $ImageName
@@ -11,7 +11,7 @@ if (-not $imageExists) {
 }
 
 docker save -o trivy-scan.tar $ImageName
-docker run --rm -v "${PWD}:/apps" aquasec/trivy:latest image --input /apps/trivy-scan.tar --severity HIGH,CRITICAL
+docker run --rm -v trivy-cache:/root/.cache -v "${PWD}:/apps" aquasec/trivy:latest image --input /apps/trivy-scan.tar --severity HIGH,CRITICAL
 if (Test-Path trivy-scan.tar) {
     Remove-Item -Force trivy-scan.tar
 }
