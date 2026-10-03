@@ -1,7 +1,5 @@
 # Vehicle Rental System – DevOps Pipeline
 
-Version: **v1.0.0**
-
 A FastAPI-based Vehicle Rental System with vehicles, customers and bookings, automated CI/CD through Jenkins, Docker containerization, Kubernetes deployment, rollback support, monitoring, logging and Trivy security scanning.
 
 ## Features
@@ -81,12 +79,10 @@ Trivy security scanning is fully integrated across the pipeline:
 2. **GitHub Actions Workflow (`.github/workflows/trivy.yml`)**:
    - Automatically runs on `push` to `main`/`master` and pull requests to scan filesystem dependencies and Docker images.
 
-3. **Local Developer Utility Scripts**:
+3. **Local Developer Utility Script**:
    - **PowerShell (Windows)**: Run `.\trivy-scan.ps1`
-   - **Bash (Linux / macOS / Git Bash)**: Run `./trivy-scan.sh`
 
 ```powershell
-# Run Trivy scan locally via Docker container
 .\trivy-scan.ps1
 ```
 

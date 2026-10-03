@@ -50,19 +50,13 @@ pipeline {
         stage('Trivy Security Scan') {
             steps {
                 bat '''
-                    echo =======================================================
-                    echo RUNNING TRIVY SECURITY SCAN
-                    echo =======================================================
-                    echo [1/2] Scanning Repository Filesystem for vulnerabilities & misconfigurations...
+                    echo [1/2] Scanning Repository Filesystem...
                     docker run --rm -v "%CD%:/apps" aquasec/trivy:latest fs --severity HIGH,CRITICAL /apps
 
                     echo [2/2] Scanning Docker Image %IMAGE%...
                     docker save -o trivy-scan.tar %IMAGE%
                     docker run --rm -v "%CD%:/apps" aquasec/trivy:latest image --input /apps/trivy-scan.tar --severity HIGH,CRITICAL
                     if exist trivy-scan.tar del /f /q trivy-scan.tar
-                    echo =======================================================
-                    echo TRIVY SECURITY SCAN COMPLETED
-                    echo =======================================================
                 '''
             }
         }
@@ -103,12 +97,9 @@ pipeline {
 
     post {
         success {
-            echo "======================================================="
-            echo "SERVICES ARE RUNNING SUCCESSFULLY!"
             echo "Prometheus: http://localhost:1000"
             echo "API Docs:   http://localhost:1001/docs"
             echo "Grafana:    http://localhost:1002"
-            echo "======================================================="
         }
         failure {
             echo "Pipeline failed!"
