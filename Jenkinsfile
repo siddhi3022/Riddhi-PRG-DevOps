@@ -7,6 +7,7 @@ pipeline {
         MON        = 'monitoring'
         IMAGE      = 'vehicle-rental-service:v1.0.0'
         KUBECONFIG = 'C:/Users/Riddhi siddhi/.kube/config'
+        DOCKER_HOST = 'tcp://127.0.0.1:2375'
     }
 
     stages {
